@@ -1,0 +1,12 @@
+{
+    "0": {
+        "name": "John Doe",
+        "department": "IT",
+        "employee_id": "EMP001"
+    },
+    "1": {
+        "name": "Jane Smith",
+        "department": "HR",
+        "employee_id": "EMP002"
+    }
+}

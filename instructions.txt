@@ -1,0 +1,20 @@
+13-19/1/2025	"Khởi động và nghiên cứu
+- Mục tiêu: Hiểu rõ yêu cầu dự án, công nghệ sử dụng, và lập kế hoạch chi tiết.
+- Nhiệm vụ:
+    - Nghiên cứu MTCNN và cách sử dụng để phát hiện khuôn mặt.
+    - Tìm hiểu TensorFlow và các mô hình CNN phù hợp (ví dụ: Vgg16, MobileNet).
+    - Phân tích yêu cầu hệ thống (mô hình, chức năng, tích hợp)."	
+20-26/1/2025	"Thu thập và xử lý dữ liệu
+- Mục tiêu: Chuẩn bị dữ liệu khuôn mặt cho việc huấn luyện mô hình.
+- Nhiệm vụ:
+Quay video và chụp ảnh khuôn mặt từng nhân viên.
+Sử dụng MTCNN để phát hiện và trích xuất khuôn mặt từ ảnh/video.
+Tiền xử lý dữ liệu, ví dụ: cắt khuôn mặt, chuẩn hóa kích thước, và lưu trữ.
+Phân chia dữ liệu: tập huấn luyện, tập kiểm thử, và tập xác thực"	
+10-16/2/2025	"Phát triển và huấn luyện mô hình
+- Mục tiêu: Xây dựng và huấn luyện model nhận diện khuôn mặt.
+- Nhiệm vụ:
+    - Xây dựng kế hoạch huấn luyện CNN với TensorFlow/Keras.
+    - Huấn luyện model nhận diện danh tính nhân viên bằng các đặc trưng khuôn mặt trích xuất.
+    - Sử dụng MTCNN để cung cấp đầu vào cho CNN.
+    - Theo dõi các chỉ số đánh giá và tối ưu hóa hyperparameters."	
