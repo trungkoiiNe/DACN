@@ -1,7 +1,6 @@
 import streamlit as st
 import cv2
 import numpy as np
-from mtcnn import MTCNN
 import tensorflow as tf
 import json
 import os
@@ -12,7 +11,9 @@ from tensorflow.keras.models import load_model
 
 class StreamlitAttendance:
     def __init__(self):
-        self.detector = MTCNN()
+        # Use OpenCV's face detector instead of MTCNN
+        cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
+        self.detector = cv2.CascadeClassifier(cascade_path)
         self.employees = self.load_employees()
         if os.path.exists('face_recognition_model.h5'):
             self.face_recognizer = load_model('face_recognition_model.h5')
@@ -80,25 +81,25 @@ class StreamlitAttendance:
             ret, frame = cap.read()
             if not ret:
                 continue
-                
-            faces = self.detector.detect_faces(frame)
             
-            for face in faces:
-                x, y, w, h = face['box']
-                if face['confidence'] > 0.95:
-                    face_img = frame[y:y+h, x:x+w]
-                    face_img = cv2.resize(face_img, (160, 160))
-                    face_img = np.expand_dims(face_img, axis=0)
-                    
-                    predictions = self.face_recognizer.predict(face_img)
-                    employee_id = np.argmax(predictions)
-                    confidence = predictions[0][employee_id]
-                    
-                    if confidence > 0.8:
-                        name = self.employees[str(employee_id)]["name"]
-                        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-                        cv2.putText(frame, name, (x, y-10),
-                                  cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+            # Convert to grayscale for face detection
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            faces = self.detector.detectMultiScale(gray, 1.1, 4)
+            
+            for (x, y, w, h) in faces:
+                face_img = frame[y:y+h, x:x+w]
+                face_img = cv2.resize(face_img, (160, 160))
+                face_img = np.expand_dims(face_img, axis=0)
+                
+                predictions = self.face_recognizer.predict(face_img)
+                employee_id = np.argmax(predictions)
+                confidence = predictions[0][employee_id]
+                
+                if confidence > 0.8:
+                    name = self.employees[str(employee_id)]["name"]
+                    cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+                    cv2.putText(frame, name, (x, y-10),
+                              cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
             
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             frame_placeholder.image(frame)
