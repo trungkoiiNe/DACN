@@ -15,33 +15,45 @@ class FaceRecognitionTrainer:
     def load_data(self):
         X = []
         y = []
+        valid_employees = []
         
         if not os.path.exists(self.data_dir):
             raise ValueError(f"Data directory '{self.data_dir}' does not exist")
-            
-        employee_dirs = [d for d in os.listdir(self.data_dir) 
-                        if os.path.isdir(os.path.join(self.data_dir, d))]
         
-        if len(employee_dirs) < 2:
-            raise ValueError(f"Found only {len(employee_dirs)} employees. Need at least 2 employees for training")
-        
-        for employee_id in employee_dirs:
+        # First pass: count valid images per employee
+        employee_image_counts = {}
+        for employee_id in os.listdir(self.data_dir):
             employee_dir = os.path.join(self.data_dir, employee_id)
             if not os.path.isdir(employee_dir):
                 continue
-                
+            
+            image_count = len([f for f in os.listdir(employee_dir) 
+                             if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
+            
+            if image_count > 0:
+                employee_image_counts[employee_id] = image_count
+                valid_employees.append(employee_id)
+        
+        if len(valid_employees) < 2:
+            raise ValueError(
+                f"Found only {len(valid_employees)} employees with images. "
+                f"Need at least 2 employees. "
+                f"Current employees: {', '.join(valid_employees)}"
+            )
+        
+        # Second pass: load images for valid employees
+        for employee_id in valid_employees:
+            employee_dir = os.path.join(self.data_dir, employee_id)
             for img_name in os.listdir(employee_dir):
                 if not img_name.lower().endswith(('.png', '.jpg', '.jpeg')):
                     continue
-                    
-                img_path = os.path.join(employee_dir, img_name)
-                img = cv2.imread(img_path)
                 
-                if img is None:
-                    print(f"Warning: Could not load image {img_path}")
-                    continue
-                    
+                img_path = os.path.join(employee_dir, img_name)
                 try:
+                    img = cv2.imread(img_path)
+                    if img is None:
+                        continue
+                    
                     img = cv2.resize(img, (160, 160))
                     img = img.astype('float32')
                     img = (img - 127.5) / 127.5  # Normalize to [-1, 1]
@@ -50,32 +62,47 @@ class FaceRecognitionTrainer:
                 except Exception as e:
                     print(f"Error processing image {img_path}: {str(e)}")
                     continue
-                
+        
         if len(X) == 0:
             raise ValueError("No valid images found in the dataset")
-
-        # Convert to numpy arrays and ensure proper shape
+        
+        # Convert to numpy arrays
         X = np.array(X)
         y = np.array(y)
         
-        # Ensure we have at least 2 classes
-        if len(np.unique(y)) < 2:
-            raise ValueError("Need at least 2 classes for training")
-                
+        print(f"Loaded {len(X)} images from {len(valid_employees)} employees")
+        for emp_id in valid_employees:
+            print(f"Employee {emp_id}: {employee_image_counts[emp_id]} images")
+        
         return X, y
     
     def validate_training_data(self):
         """Check if there's enough data for training"""
-        if not os.path.exists(self.data_dir):
-            return False, "No training data directory found"
+        try:
+            if not os.path.exists(self.data_dir):
+                return False, "No training data directory found"
             
-        employee_dirs = [d for d in os.listdir(self.data_dir) 
-                        if os.path.isdir(os.path.join(self.data_dir, d))]
-        
-        if len(employee_dirs) < 2:
-            return False, f"Found only {len(employee_dirs)} employees. Need at least 2 employees."
+            # Count valid employees with images
+            valid_employees = []
+            for employee_id in os.listdir(self.data_dir):
+                employee_dir = os.path.join(self.data_dir, employee_id)
+                if not os.path.isdir(employee_dir):
+                    continue
+                
+                image_count = len([f for f in os.listdir(employee_dir) 
+                                 if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
+                if image_count > 0:
+                    valid_employees.append(employee_id)
             
-        return True, f"Found {len(employee_dirs)} employees. Ready for training."
+            if len(valid_employees) < 2:
+                return False, (f"Found only {len(valid_employees)} employees with images. "
+                             f"Need at least 2 employees. "
+                             f"Current employees: {', '.join(valid_employees)}")
+            
+            return True, f"Found {len(valid_employees)} employees with images. Ready for training."
+            
+        except Exception as e:
+            return False, f"Error validating training data: {str(e)}"
     
     def create_model(self, num_classes):
         base_model = MobileNetV2(input_shape=self.input_shape,
