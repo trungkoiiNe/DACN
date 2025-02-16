@@ -59,12 +59,27 @@ class StreamlitAttendance:
     def train_model_page(self):
         st.subheader("Train Face Recognition Model")
         
+        trainer = FaceRecognitionTrainer()
+        can_train, message = trainer.validate_training_data()
+        
+        st.info(message)
+        
+        if not can_train:
+            st.warning("Please register at least 2 employees before training")
+            if st.button("Go to Registration"):
+                st.session_state.menu_choice = "Register Employee"
+                st.experimental_rerun()
+            return
+        
         if st.button("Start Training"):
-            trainer = FaceRecognitionTrainer()
-            with st.spinner("Training in progress..."):
-                history = trainer.train()
-            st.success("Training completed!")
-            st.line_chart(history.history['accuracy'])
+            try:
+                with st.spinner("Training in progress..."):
+                    history = trainer.train()
+                st.success("Training completed!")
+                if history is not None and hasattr(history, 'history'):
+                    st.line_chart(history.history['accuracy'])
+            except Exception as e:
+                st.error(f"Training failed: {str(e)}")
 
     def attendance_page(self):
         st.subheader("Live Attendance System")
@@ -128,10 +143,15 @@ class StreamlitAttendance:
 def main():
     st.title("Face Recognition Attendance System")
     
+    if 'menu_choice' not in st.session_state:
+        st.session_state.menu_choice = "Register Employee"
+    
     system = StreamlitAttendance()
     
     menu = ["Register Employee", "Train Model", "Take Attendance", "View Attendance"]
-    choice = st.sidebar.selectbox("Select Action", menu)
+    choice = st.sidebar.selectbox("Select Action", menu, 
+                                index=menu.index(st.session_state.menu_choice))
+    st.session_state.menu_choice = choice
     
     if choice == "Register Employee":
         system.collect_faces_page()

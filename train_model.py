@@ -16,7 +16,16 @@ class FaceRecognitionTrainer:
         X = []
         y = []
         
-        for employee_id in os.listdir(self.data_dir):
+        if not os.path.exists(self.data_dir):
+            raise ValueError(f"Data directory '{self.data_dir}' does not exist")
+            
+        employee_dirs = [d for d in os.listdir(self.data_dir) 
+                        if os.path.isdir(os.path.join(self.data_dir, d))]
+        
+        if len(employee_dirs) < 2:
+            raise ValueError(f"Found only {len(employee_dirs)} employees. Need at least 2 employees for training")
+        
+        for employee_id in employee_dirs:
             employee_dir = os.path.join(self.data_dir, employee_id)
             if not os.path.isdir(employee_dir):
                 continue
@@ -54,6 +63,19 @@ class FaceRecognitionTrainer:
             raise ValueError("Need at least 2 classes for training")
                 
         return X, y
+    
+    def validate_training_data(self):
+        """Check if there's enough data for training"""
+        if not os.path.exists(self.data_dir):
+            return False, "No training data directory found"
+            
+        employee_dirs = [d for d in os.listdir(self.data_dir) 
+                        if os.path.isdir(os.path.join(self.data_dir, d))]
+        
+        if len(employee_dirs) < 2:
+            return False, f"Found only {len(employee_dirs)} employees. Need at least 2 employees."
+            
+        return True, f"Found {len(employee_dirs)} employees. Ready for training."
     
     def create_model(self, num_classes):
         base_model = MobileNetV2(input_shape=self.input_shape,
