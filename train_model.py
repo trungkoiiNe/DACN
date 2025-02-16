@@ -18,12 +18,32 @@ class FaceRecognitionTrainer:
         
         for employee_id in os.listdir(self.data_dir):
             employee_dir = os.path.join(self.data_dir, employee_id)
+            if not os.path.isdir(employee_dir):  # Skip if not a directory
+                continue
+                
             for img_name in os.listdir(employee_dir):
+                # Skip non-image files and metadata
+                if not img_name.lower().endswith(('.png', '.jpg', '.jpeg')):
+                    continue
+                    
                 img_path = os.path.join(employee_dir, img_name)
                 img = cv2.imread(img_path)
-                img = cv2.resize(img, (160, 160))
-                X.append(img)
-                y.append(int(employee_id))
+                
+                # Validate image was loaded properly
+                if img is None:
+                    print(f"Warning: Could not load image {img_path}")
+                    continue
+                    
+                try:
+                    img = cv2.resize(img, (160, 160))
+                    X.append(img)
+                    y.append(int(employee_id))
+                except Exception as e:
+                    print(f"Error processing image {img_path}: {str(e)}")
+                    continue
+                
+        if len(X) == 0:
+            raise ValueError("No valid images found in the dataset")
                 
         return np.array(X), np.array(y)
     
