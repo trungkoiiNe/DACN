@@ -60,7 +60,7 @@ class FaceRecognitionTrainer:
                     X.append(img)
                     y.append(int(employee_id))
                 except Exception as e:
-                    print(f"Error processing image {img_path}: {str(e)}")
+                    print(f"Error processing image {img_path}: ")
                     continue
         
         if len(X) == 0:
